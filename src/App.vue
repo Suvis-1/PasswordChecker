@@ -15,6 +15,10 @@ let toastTimeout = null;
 onMounted(() => {
   showTutorial.value = !localStorage.getItem("tutorialSeen");
   isDark.value = localStorage.getItem("darkMode") === "true";
+
+  // Sync body class with dark mode
+  document.body.classList.toggle("dark", isDark.value);
+  document.body.classList.toggle("light", !isDark.value);
 });
 
 // Close tutorial
@@ -55,45 +59,50 @@ function removeItem(id) {
 function toggleDark() {
   isDark.value = !isDark.value;
   localStorage.setItem("darkMode", String(isDark.value));
+
+  document.body.classList.toggle("dark", isDark.value);
+  document.body.classList.toggle("light", !isDark.value);
 }
 </script>
 
 <template>
-  <div class="app" :class="{ 'app-dark': isDark }">
-    <!-- Tutorial Modal -->
-    <transition name="fade">
-      <TutorialModal v-if="showTutorial" @close="closeTutorial" />
-    </transition>
+  <div class="app-shell" :class="{ 'app-dark': isDark }">
+    <div class="app">
+      <!-- Tutorial Modal -->
+      <transition name="fade">
+        <TutorialModal v-if="showTutorial" @close="closeTutorial" />
+      </transition>
 
-    <!-- Header -->
-    <header class="app-header">
-      <h1>Password Leak Checker</h1>
-      <p>
-        Check whether your passwords have appeared in known data breaches and get
-        strength and security advice.
-      </p>
+      <!-- Header -->
+      <header class="app-header">
+        <h1>Password Leak Checker</h1>
+        <p>
+          Check whether your passwords have appeared in known data breaches and get
+          strength and security advice.
+        </p>
 
-      <div class="header-actions">
-        <button @click="showTutorial = true">View tutorial again</button>
-        <button @click="toggleDark">
-          {{ isDark ? "Light mode" : "Dark mode" }}
-        </button>
-      </div>
-    </header>
+        <div class="header-actions">
+          <button @click="showTutorial = true">View tutorial again</button>
+          <button @click="toggleDark">
+            {{ isDark ? "Light mode" : "Dark mode" }}
+          </button>
+        </div>
+      </header>
 
-    <!-- Main content -->
-    <main class="app-main">
-      <PasswordForm
-        @update:results="addResults"
-        @clear="results = []"
-      />
+      <!-- Main content -->
+      <main class="app-main">
+        <PasswordForm
+          @update:results="addResults"
+          @clear="results = []"
+        />
 
-      <ResultsTable
-        :results="results"
-        @remove="removeItem"
-        @toast="showToast"
-      />
-    </main>
+        <ResultsTable
+          :results="results"
+          @remove="removeItem"
+          @toast="showToast"
+        />
+      </main>
+    </div>
 
     <!-- Toast -->
     <transition name="toast">
@@ -103,47 +112,64 @@ function toggleDark() {
 </template>
 
 <style scoped>
-/* Layout */
-.app {
+/* Outer shell to center the app */
+.app-shell {
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
   padding: 1rem;
+}
+
+/* Main app container */
+.app {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
   flex-direction: column;
 }
-.app-main {
-  flex: 1;
-  overflow-y: auto;
-}
 
-@media (max-width: 600px) {
-  .app {
-    padding: 0.75rem;
-  }
-
-  .app-main {
-    padding: 0.75rem;
-  }
-
-  .results-table th,
-  .results-table td {
-    font-size: 0.8rem;
-    padding: 0.4rem;
-  }
-}
-
+/* Header */
 .app-header {
+  text-align: center;
   margin-bottom: 1.5rem;
+}
+
+.app-header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.app-header p {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin: 0;
 }
 
 .header-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
+.header-actions button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Main content card */
 .app-main {
   background: #f7f7f7;
   border-radius: 8px;
   padding: 1rem 1.25rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* Toast */
@@ -192,20 +218,32 @@ function toggleDark() {
   background: #1e293b;
 }
 
-.app-dark .app-header p,
-.app-dark .header-actions button {
+.app-dark .app-header p {
   color: #cbd5e1;
-  border-color: #64748b;
 }
 
-.app-dark button {
-  background: #334155;
-  color: #f1f5f9;
-  border: 1px solid #475569;
+.app-dark .header-actions button {
+  background: #3b82f6;
 }
 
 .app-dark .toast {
   background: #334155;
   color: #f8fafc;
+}
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .app-shell {
+    padding: 0.75rem;
+  }
+
+  .app-main {
+    padding: 0.9rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 </style>

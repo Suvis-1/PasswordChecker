@@ -2,28 +2,26 @@
 import { computed } from "vue";
 
 const props = defineProps({
-  leaked: Boolean,
-  count: Number,
-  strengthScore: Number,
-  strengthFeedback: {
+  item: {
     type: Object,
-    default: () => ({}),
+    required: true
   },
+  formatAdvice: {
+    type: Function,
+    required: true
+  }
 });
 
-const emit = defineEmits(["toast"]);
-
-// Build advice list
+// Build advice list for on‑screen display
 const adviceMessages = computed(() => {
   const messages = [];
 
-  // Breach-related advice
-  if (props.leaked) {
+  if (props.item.leaked) {
     messages.push("This password has appeared in known data breaches.");
 
-    if (props.count > 1_000_000) {
+    if (props.item.count > 1_000_000) {
       messages.push("This is an extremely common password and widely used by attackers.");
-    } else if (props.count > 1_000) {
+    } else if (props.item.count > 1_000) {
       messages.push("This password is widely known and frequently attempted by attackers.");
     } else {
       messages.push("Even a small number of breaches is enough to consider it unsafe.");
@@ -34,42 +32,29 @@ const adviceMessages = computed(() => {
     messages.push("This password was not found in the known breached password dataset.");
   }
 
-  // Strength-related advice
-  if (props.strengthScore <= 1) {
+  if (props.item.strengthScore <= 1) {
     messages.push("Your password is weak. Use a longer passphrase (14+ characters) with mixed character types.");
-  } else if (props.strengthScore === 2) {
+  } else if (props.item.strengthScore === 2) {
     messages.push("Your password is average. Add more randomness or length to improve it.");
-  } else if (props.strengthScore >= 3 && !props.leaked) {
+  } else if (props.item.strengthScore >= 3 && !props.item.leaked) {
     messages.push("This is a strong password. Keep it unique and avoid reusing it across accounts.");
   }
 
-  // zxcvbn feedback
-  if (props.strengthFeedback.warning) {
-    messages.push(props.strengthFeedback.warning);
+  if (props.item.strengthFeedback.warning) {
+    messages.push(props.item.strengthFeedback.warning);
   }
-  if (props.strengthFeedback.suggestions?.length) {
-    messages.push(...props.strengthFeedback.suggestions);
+  if (props.item.strengthFeedback.suggestions?.length) {
+    messages.push(...props.item.strengthFeedback.suggestions);
   }
 
   return messages;
 });
-
-// Copy advice to clipboard
-async function copyAdvice() {
-  try {
-    await navigator.clipboard.writeText(adviceMessages.value.join("\n"));
-    emit("toast", "Advice copied!");
-  } catch (e) {
-    console.error("Failed to copy advice:", e);
-  }
-}
 </script>
 
 <template>
   <div class="advice-panel">
     <div class="advice-header">
       <span>Advice</span>
-      <button class="copy-btn" @click="copyAdvice">Copy</button>
     </div>
 
     <ul class="advice-list">
@@ -86,25 +71,10 @@ async function copyAdvice() {
 }
 
 .advice-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   font-size: 0.8rem;
   color: inherit;
   margin-bottom: 0.25rem;
-}
-
-.copy-btn {
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  padding: 0.05rem 0.5rem;
-  font-size: 0.7rem;
-  background: #f9fafb;
-  cursor: pointer;
-}
-
-.copy-btn:hover {
-  background: #f3f4f6;
+  font-weight: 600;
 }
 
 .advice-list {
@@ -119,13 +89,11 @@ async function copyAdvice() {
 }
 
 /* Dark mode */
-.app-dark .copy-btn {
-  background: #475569;
-  color: #f8fafc;
-  border-color: #64748b;
+.app-dark .advice-header {
+  color: #f1f5f9;
 }
 
-.app-dark .copy-btn:hover {
-  background: #64748b;
+.app-dark .advice-list {
+  color: #e2e8f0;
 }
 </style>

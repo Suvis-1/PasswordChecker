@@ -233,9 +233,9 @@ function clearForm() {
 }
 
 .generate-btn {
-  border-color: #10b981;
-  background: #ecfdf5;
-  color: #047857;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
 }
 
 .actions {
