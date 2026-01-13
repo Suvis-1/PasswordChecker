@@ -32,10 +32,17 @@ function showToast(msg) {
   }, 2000);
 }
 
-// Add new results (accumulate + prevent duplicates)
+// Add new results (accumulate + prevent duplicates + warn user)
 function addResults(newItems) {
   const existing = new Set(results.value.map(r => r.password));
+
+  const duplicates = newItems.filter(item => existing.has(item.password));
   const filtered = newItems.filter(item => !existing.has(item.password));
+
+  if (duplicates.length > 0) {
+    showToast("Some passwords were already checked");
+  }
+
   results.value = [...results.value, ...filtered];
 }
 
@@ -98,9 +105,29 @@ function toggleDark() {
 <style scoped>
 /* Layout */
 .app {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 1.5rem;
+  min-height: 100vh;
+  padding: 1rem;
+  flex-direction: column;
+}
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+}
+
+@media (max-width: 600px) {
+  .app {
+    padding: 0.75rem;
+  }
+
+  .app-main {
+    padding: 0.75rem;
+  }
+
+  .results-table th,
+  .results-table td {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
 }
 
 .app-header {

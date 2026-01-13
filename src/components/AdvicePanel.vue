@@ -69,7 +69,7 @@ async function copyAdvice() {
   <div class="advice-panel">
     <div class="advice-header">
       <span>Advice</span>
-      <button class="copy-btn" @click="copyAdvice">Copy advice</button>
+      <button class="copy-btn" @click="copyAdvice">Copy</button>
     </div>
 
     <ul class="advice-list">

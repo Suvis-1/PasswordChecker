@@ -6,15 +6,17 @@ const props = defineProps({
   },
 });
 
+// Labels for each score (0–4)
 const labels = ["Very weak", "Weak", "Fair", "Strong", "Very strong"];
 
+// Bar colors
 function color(score) {
   return [
     "#dc2626", // red
     "#f97316", // orange
     "#eab308", // yellow
     "#22c55e", // green
-    "#16a34a", // dark green
+    "#16a34a"  // dark green
   ][score] || "#6b7280";
 }
 </script>
@@ -44,7 +46,7 @@ function color(score) {
 
 .strength-label {
   font-size: 0.75rem;
-  color: #374151;
+  color: inherit;
 }
 
 .bar {
@@ -58,5 +60,10 @@ function color(score) {
 .bar-fill {
   height: 100%;
   transition: width 0.25s ease-out;
+}
+
+/* Dark mode */
+.app-dark .bar {
+  background: #334155;
 }
 </style>

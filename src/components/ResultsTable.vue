@@ -50,85 +50,85 @@ watch(
 <template>
   <transition name="fade-slide">
     <section v-if="results.length" class="results">
-      
+
       <!-- Expand/Collapse All -->
       <div class="bulk-controls">
         <button @click="expandAll">Expand all</button>
         <button @click="collapseAll">Collapse all</button>
       </div>
 
-      <!-- Results Table -->
-      <table class="results-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Password</th>
-            <th>Leaked</th>
-            <th>Times seen</th>
-            <th>Strength</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+      <!-- FIXED HEIGHT WRAPPER -->
+      <div class="results-container">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Password</th>
+              <th>Leaked</th>
+              <th>Times seen</th>
+              <th>Strength</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr v-for="item in results" :key="item.id">
-            <td>{{ item.id }}</td>
+          <tbody>
+            <tr v-for="(item, index) in results" :key="item.id">
+              <!-- CLEAN INDEX -->
+              <td>{{ index + 1 }}</td>
 
-            <!-- PASSWORD + EXPAND/COLLAPSE -->
-            <td class="password-cell">
-              <div class="password-header">
-                <code>{{ item.password }}</code>
+              <!-- PASSWORD + EXPAND/COLLAPSE -->
+              <td class="password-cell">
+                <div class="password-header">
+                  <code>{{ item.password }}</code>
 
-                <button class="toggle-btn" @click="toggleRow(item.id)">
-                  {{ openRows.has(item.id) ? "Hide" : "Show" }}
-                </button>
-              </div>
-
-              <!-- Advice Panel -->
-              <transition name="fade">
-                <div
-                  v-if="openRows.has(item.id)"
-                  class="advice-wrapper"
-                >
-                  <AdvicePanel
-                    :leaked="item.leaked"
-                    :count="item.count"
-                    :strength-score="item.strengthScore"
-                    :strength-feedback="item.strengthFeedback"
-                    @toast="emit('toast', $event)"
-                  />
+                  <button class="toggle-btn" @click="toggleRow(item.id)">
+                    {{ openRows.has(item.id) ? "Hide" : "Show" }}
+                  </button>
                 </div>
-              </transition>
-            </td>
 
-            <!-- LEAKED -->
-            <td>
-              <span v-if="item.leaked" class="badge bad">Yes</span>
-              <span v-else class="badge good">No</span>
-            </td>
+                <!-- Advice Panel -->
+                <transition name="fade">
+                  <div v-if="openRows.has(item.id)" class="advice-wrapper">
+                    <AdvicePanel
+                      :leaked="item.leaked"
+                      :count="item.count"
+                      :strength-score="item.strengthScore"
+                      :strength-feedback="item.strengthFeedback"
+                      @toast="emit('toast', $event)"
+                    />
+                  </div>
+                </transition>
+              </td>
 
-            <!-- COUNT -->
-            <td>
-              <span v-if="item.leaked">
-                {{ item.count.toLocaleString() }}
-              </span>
-              <span v-else>-</span>
-            </td>
+              <!-- LEAKED -->
+              <td>
+                <span v-if="item.leaked" class="badge bad">Yes</span>
+                <span v-else class="badge good">No</span>
+              </td>
 
-            <!-- STRENGTH -->
-            <td>
-              <StrengthBadge :score="item.strengthScore" />
-            </td>
+              <!-- COUNT -->
+              <td>
+                <span v-if="item.leaked">
+                  {{ item.count.toLocaleString() }}
+                </span>
+                <span v-else>-</span>
+              </td>
 
-            <!-- REMOVE -->
-            <td>
-              <button class="remove-btn" @click="emit('remove', item.id)">
-                Remove
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              <!-- STRENGTH -->
+              <td>
+                <StrengthBadge :score="item.strengthScore" />
+              </td>
+
+              <!-- REMOVE -->
+              <td>
+                <button class="remove-btn" @click="emit('remove', item.id)">
+                  Remove
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </transition>
 </template>
@@ -136,6 +136,14 @@ watch(
 <style scoped>
 .results {
   margin-top: 1.5rem;
+}
+
+/* FIXED HEIGHT WRAPPER */
+.results-container {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  border-radius: 6px;
 }
 
 /* Expand/Collapse All Buttons */
@@ -193,12 +201,9 @@ watch(
   font-size: 0.75rem;
 }
 
-/* Advice scroll wrapper */
+/* Advice wrapper (no max-height now) */
 .advice-wrapper {
-  max-height: 250px;
-  overflow-y: auto;
   margin-top: 0.4rem;
-  padding-right: 0.3rem;
 }
 
 /* Leaked badges */
@@ -285,7 +290,10 @@ watch(
   background: #3b82f6;
 }
 
-.app-dark .advice-wrapper {
+.app-dark .results-container {
   scrollbar-color: #64748b #1e293b;
+}
+.mode-switch button {
+background-color: #b0b0b045;
 }
 </style>

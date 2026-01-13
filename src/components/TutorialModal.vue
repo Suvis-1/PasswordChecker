@@ -72,6 +72,7 @@ function finish() {
 </template>
 
 <style scoped>
+/* Overlay */
 .overlay {
   position: fixed;
   inset: 0;
@@ -80,7 +81,10 @@ function finish() {
   align-items: center;
   justify-content: center;
   z-index: 50;
+  animation: fadeIn 0.2s ease-out;
 }
+
+/* Modal */
 .modal {
   background: white;
   padding: 1.5rem;
@@ -89,9 +93,9 @@ function finish() {
   max-width: 420px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   position: relative;
-  transform: scale(1);
-  animation: scaleIn 0.18s ease-out;
+  animation: scaleIn 0.22s ease-out;
 }
+
 .skip-btn {
   position: absolute;
   top: 0.6rem;
@@ -100,12 +104,15 @@ function finish() {
   border: none;
   color: #6b7280;
   cursor: pointer;
+  font-size: 0.85rem;
 }
+
 .controls {
   margin-top: 1.2rem;
   display: flex;
   justify-content: space-between;
 }
+
 .controls button {
   padding: 0.45rem 1rem;
   border: none;
@@ -114,18 +121,43 @@ function finish() {
   color: white;
   cursor: pointer;
 }
+
 .controls button:first-child {
   background: #6b7280;
 }
 
+/* Animations */
 @keyframes scaleIn {
   from {
-    transform: scale(0.95);
+    transform: scale(0.92);
     opacity: 0;
   }
   to {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Dark mode */
+.app-dark .modal {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.app-dark .skip-btn {
+  color: #cbd5e1;
+}
+
+.app-dark .controls button:first-child {
+  background: #475569;
+}
+
+.app-dark .controls button {
+  background: #3b82f6;
 }
 </style>

@@ -64,7 +64,7 @@ async function checkPasswordList(passwords) {
     const strength = zxcvbn(pwd);
 
     results.push({
-      id: Date.now() + i, // unique ID
+      id: crypto.randomUUID(), // stable unique ID
       password: pwd,
       leaked,
       count,
@@ -186,7 +186,6 @@ function clearForm() {
 /* Mode switch */
 .mode-switch {
   display: inline-flex;
-  border-radius: 999px;
   border: 1px solid #d1d5db;
   overflow: hidden;
   margin-bottom: 0.75rem;
@@ -194,11 +193,12 @@ function clearForm() {
 .mode-switch button {
   padding: 0.35rem 0.9rem;
   border: none;
-  background: transparent;
+  background: #a7a7a755;
   cursor: pointer;
+  color: black;
 }
 .mode-switch button.active {
-  background: #2563eb;
+  background: #000000;
   color: white;
 }
 
@@ -213,23 +213,25 @@ function clearForm() {
 /* Password input row */
 .password-input-wrapper {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
+
 .password-input-wrapper input {
-  flex: 1;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.password-input-wrapper button {
+  flex: 0 0 auto;
 }
 
 /* Buttons */
 .toggle-visibility,
 .generate-btn {
-  margin-left: 0.4rem;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.75rem;
-  border-radius: 4px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  cursor: pointer;
+  flex: 1 1 auto;
+  white-space: nowrap;
 }
+
 .generate-btn {
   border-color: #10b981;
   background: #ecfdf5;
