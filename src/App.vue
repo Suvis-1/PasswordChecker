@@ -1,45 +1,238 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick, watch } from "vue";
 import PasswordForm from "./components/PasswordForm.vue";
 import ResultsTable from "./components/ResultsTable.vue";
 import TutorialModal from "./components/TutorialModal.vue";
+import ProductTour from "./components/ProductTour.vue";
 
 const results = ref([]);
 const showTutorial = ref(false);
+const showTour = ref(false);
 const toast = ref("");
 const isDark = ref(false);
+const passwordFormRef = ref(null);
+const isInitializingTour = ref(false);
 
 let toastTimeout = null;
 
-// Load preferences on startup
+/* -------------------------------------------------------
+   LOAD USER PREFERENCES
+------------------------------------------------------- */
 onMounted(() => {
   showTutorial.value = !localStorage.getItem("tutorialSeen");
   isDark.value = localStorage.getItem("darkMode") === "true";
 
-  // Sync body class with dark mode
   document.body.classList.toggle("dark", isDark.value);
   document.body.classList.toggle("light", !isDark.value);
+
+  if (localStorage.getItem("tutorialSeen") && !localStorage.getItem("tourCompleted")) {
+    // Start tour after a brief delay
+    setTimeout(startTour, 800);
+  }
 });
 
-// Close tutorial
-function closeTutorial() {
-  showTutorial.value = false;
+/* -------------------------------------------------------
+   START TOUR PROPERLY
+------------------------------------------------------- */
+async function startTour() {
+  isInitializingTour.value = true;
+  
+  // Reset to initial state
+  results.value = [];
+  
+  // Ensure we're in single mode
+  if (passwordFormRef.value && passwordFormRef.value.switchMode) {
+    passwordFormRef.value.switchMode('single');
+  } else {
+    // Fallback: try to click the single mode button
+    const singleModeBtn = document.querySelector('[data-tour-target="single-mode-btn"]');
+    if (singleModeBtn && !singleModeBtn.classList.contains('active')) {
+      singleModeBtn.click();
+    }
+  }
+  
+  // Wait for UI to update
+  await nextTick();
+  
+  // Clear any existing input
+  const input = document.querySelector('[data-tour-target="single-password-input"]');
+  if (input) {
+    input.value = '';
+    const event = new Event('input', { bubbles: true });
+    input.dispatchEvent(event);
+  }
+  
+  // Start the tour
+  showTour.value = true;
+  isInitializingTour.value = false;
 }
 
-// Toast notifications
+/* -------------------------------------------------------
+   TUTORIAL + TOUR CONTROL
+------------------------------------------------------- */
+async function closeTutorial() {
+  showTutorial.value = false;
+  localStorage.setItem("tutorialSeen", "true");
+
+  if (!localStorage.getItem("tourCompleted")) {
+    await nextTick();
+    // Start tour after tutorial
+    setTimeout(startTour, 300);
+  }
+}
+
+function restartTour() {
+  localStorage.removeItem("tourCompleted");
+  startTour();
+}
+
+function finishTour() {
+  localStorage.setItem("tourCompleted", "true");
+  showTour.value = false;
+}
+
+/* -------------------------------------------------------
+   TOUR STEP ACTIONS
+------------------------------------------------------- */
+// Define tour actions
+const tourActions = {
+  switchToSingleMode: () => {
+    if (passwordFormRef.value && passwordFormRef.value.switchMode) {
+      passwordFormRef.value.switchMode('single');
+    } else {
+      // Fallback: try to click the button
+      const button = document.querySelector('[data-tour-target="single-mode-btn"]');
+      if (button && !button.classList.contains('active')) {
+        button.click();
+      }
+    }
+    return new Promise(resolve => setTimeout(resolve, 150));
+  },
+  
+  switchToMultiMode: () => {
+    if (passwordFormRef.value && passwordFormRef.value.switchMode) {
+      passwordFormRef.value.switchMode('multi');
+    } else {
+      // Fallback: try to click the button
+      const button = document.querySelector('[data-tour-target="multi-mode-btn"]');
+      if (button && !button.classList.contains('active')) {
+        button.click();
+      }
+    }
+    return new Promise(resolve => setTimeout(resolve, 150));
+  },
+  
+  // Add a sample password for demonstration (single mode)
+  addSamplePassword: () => {
+    const input = document.querySelector('[data-tour-target="single-password-input"]');
+    if (input) {
+      input.value = 'SamplePass123!';
+      // Trigger Vue reactivity
+      const event = new Event('input', { bubbles: true });
+      input.dispatchEvent(event);
+    }
+    return Promise.resolve();
+  },
+  
+  // Add sample passwords for multiple mode
+  addSampleMultiPasswords: () => {
+    const textarea = document.querySelector('[data-tour-target="multi-password-textarea"]');
+    if (textarea) {
+      textarea.value = 'password123\nSamplePass123!\nMySecureP@ssw0rd\n123456\nqwerty';
+      // Trigger Vue reactivity
+      const event = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(event);
+    }
+    return Promise.resolve();
+  },
+  
+  // Clear the sample password (single mode)
+  clearSamplePassword: () => {
+    const input = document.querySelector('[data-tour-target="single-password-input"]');
+    if (input) {
+      input.value = '';
+      const event = new Event('input', { bubbles: true });
+      input.dispatchEvent(event);
+    }
+    return Promise.resolve();
+  },
+  
+  // Clear sample passwords (multiple mode)
+  clearSampleMultiPasswords: () => {
+    const textarea = document.querySelector('[data-tour-target="multi-password-textarea"]');
+    if (textarea) {
+      textarea.value = '';
+      const event = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(event);
+    }
+    return Promise.resolve();
+  },
+  
+  // Add sample results for demonstration
+  addSampleResults: () => {
+    const sampleResults = [
+      {
+        id: crypto.randomUUID(),
+        password: 'SamplePass123!',
+        leaked: false,
+        count: 0,
+        strengthScore: 3,
+        strengthFeedback: {
+          warning: '',
+          suggestions: ['Add more special characters for better security']
+        }
+      },
+      {
+        id: crypto.randomUUID(),
+        password: 'password123',
+        leaked: true,
+        count: 4523567,
+        strengthScore: 0,
+        strengthFeedback: {
+          warning: 'This is a top 10 most common password',
+          suggestions: ['Never use common passwords', 'Use a password manager']
+        }
+      },
+      {
+        id: crypto.randomUUID(),
+        password: 'MySecureP@ssw0rd',
+        leaked: false,
+        count: 0,
+        strengthScore: 4,
+        strengthFeedback: {
+          warning: '',
+          suggestions: ['Great password! Keep it safe and unique.']
+        }
+      }
+    ];
+    
+    results.value = sampleResults;
+    return Promise.resolve();
+  },
+  
+  // Clear sample results
+  clearSampleResults: () => {
+    results.value = [];
+    return Promise.resolve();
+  }
+};
+
+/* -------------------------------------------------------
+   TOASTS
+------------------------------------------------------- */
 function showToast(msg) {
   toast.value = msg;
-
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => {
     toast.value = "";
   }, 2000);
 }
 
-// Add new results (accumulate + prevent duplicates + warn user)
+/* -------------------------------------------------------
+   RESULTS HANDLING
+------------------------------------------------------- */
 function addResults(newItems) {
   const existing = new Set(results.value.map(r => r.password));
-
   const duplicates = newItems.filter(item => existing.has(item.password));
   const filtered = newItems.filter(item => !existing.has(item.password));
 
@@ -50,29 +243,157 @@ function addResults(newItems) {
   results.value = [...results.value, ...filtered];
 }
 
-// Remove a single row
 function removeItem(id) {
   results.value = results.value.filter(r => r.id !== id);
 }
 
-// Toggle dark mode
+/* -------------------------------------------------------
+   DARK MODE
+------------------------------------------------------- */
 function toggleDark() {
   isDark.value = !isDark.value;
   localStorage.setItem("darkMode", String(isDark.value));
-
   document.body.classList.toggle("dark", isDark.value);
   document.body.classList.toggle("light", !isDark.value);
 }
+
+// Watch for results changes to update tour positioning
+watch(results, () => {
+  // When results change, we need to wait a bit for DOM update
+  if (showTour.value) {
+    setTimeout(() => {
+      // This will trigger tour to reposition
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  }
+}, { deep: true });
+
+/* -------------------------------------------------------
+   TOUR STEPS WITH PROPER ASYNC ACTIONS
+------------------------------------------------------- */
+// Define tour steps as a computed property
+const tourSteps = [
+  /* 1. Dark/Light mode */
+  {
+    target: '.header-actions button:nth-child(3)',
+    text: 'Switch between light and dark mode anytime.',
+    placement: 'bottom'
+  },
+  /* 2. Single */
+  {
+    target: '[data-tour-target="single-mode-btn"]',
+    text: 'This is Single Password mode — check one password at a time.',
+    placement: 'bottom'
+  },
+  /* 3. Single Password workflow */
+  {
+    target: '[data-tour-target="single-password-input"]',
+    text: 'Enter a password here to analyse it. Let me add a sample for demonstration.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.addSamplePassword();
+    }
+  },
+  {
+    target: '[data-tour-target="toggle-visibility-btn"]',
+    text: 'Click here to show or hide your password.',
+    placement: 'right'
+  },
+  {
+    target: '[data-tour-target="check-button"]',
+    text: 'Click Check to analyse your password. Let me add some sample results to show you.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.addSampleResults();
+    }
+  },
+  {
+    target: '.results-container',
+    text: 'Your results will appear here. I\'ve added sample results to demonstrate.',
+    placement: 'top'
+  },
+  {
+    target: '[data-tour-target="clear-button"]',
+    text: 'Clear all results.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.clearSampleResults();
+    }
+  },
+  {
+    target: '[data-tour-target="generate-password-btn"]',
+    text: 'Generate a strong random password.',
+    placement: 'right'
+  },
+  /* 4. Switch to Multiple Password mode */
+  {
+    target: '[data-tour-target="multi-mode-btn"]',
+    text: 'Now let\'s look at Multiple Password mode.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.clearSampleResults(); // Clear previous results
+      await tourActions.switchToMultiMode();
+    }
+  },
+  {
+    target: '[data-tour-target="multi-password-textarea"]',
+    text: 'Enter one password per line to check them together. I\'ll add some samples.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.addSampleMultiPasswords();
+    }
+  },
+  {
+    target: '[data-tour-target="check-button"]',
+    text: 'Click Check to analyse all passwords.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.addSampleResults(); // Show results for multiple passwords
+    }
+  },
+  {
+    target: '.results-container',
+    text: 'Results for all passwords will appear here.',
+    placement: 'top'
+  },
+    {
+    target: '[data-tour-target="clear-button"]',
+    text: 'Clear all results.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.clearSampleResults();
+    }
+  },
+  /* 5. Switch back to Single mode and clean up */
+  {
+    target: '[data-tour-target="single-mode-btn"]',
+    text: 'Returning to Single Password mode. I\'ll clear everything and show you the clean interface.',
+    placement: 'bottom',
+    action: async () => {
+      await tourActions.clearSampleResults(); // Clear results
+      await tourActions.clearSampleMultiPasswords(); // Clear multi passwords
+      await tourActions.switchToSingleMode();
+      await tourActions.clearSamplePassword(); // Clear single password
+    }
+  }
+];
 </script>
 
 <template>
   <div class="app-shell" :class="{ 'app-dark': isDark }">
-    <div class="app">
-      <!-- Tutorial Modal -->
-      <transition name="fade">
-        <TutorialModal v-if="showTutorial" @close="closeTutorial" />
-      </transition>
+    <!-- Product Tour at root level (outside .app container) -->
+    <ProductTour
+      v-if="showTour && !isInitializingTour"
+      :steps="tourSteps"
+      @finish="finishTour"
+    />
 
+    <!-- Tutorial Modal -->
+    <transition name="fade">
+      <TutorialModal v-if="showTutorial" @close="closeTutorial" />
+    </transition>
+
+    <div class="app">
       <!-- Header -->
       <header class="app-header">
         <h1>Password Leak Checker</h1>
@@ -82,7 +403,8 @@ function toggleDark() {
         </p>
 
         <div class="header-actions">
-          <button @click="showTutorial = true">View tutorial again</button>
+          <button @click="showTutorial = true">View Intro again</button>
+          <button @click="restartTour">Restart tour</button>
           <button @click="toggleDark">
             {{ isDark ? "Light mode" : "Dark mode" }}
           </button>
@@ -92,6 +414,7 @@ function toggleDark() {
       <!-- Main content -->
       <main class="app-main">
         <PasswordForm
+          ref="passwordFormRef"
           @update:results="addResults"
           @clear="results = []"
         />
@@ -112,36 +435,27 @@ function toggleDark() {
 </template>
 
 <style scoped>
-/* Outer shell to center the app */
 .app-shell {
   min-height: 100vh;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   padding: 1rem;
+  position: relative;
 }
 
-/* Main app container */
 .app {
+  position: relative;
   width: 100%;
   max-width: 720px;
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
-/* Header */
 .app-header {
   text-align: center;
   margin-bottom: 1.5rem;
-}
-
-.app-header h1 {
-  margin-bottom: 0.5rem;
-}
-
-.app-header p {
-  font-size: 0.95rem;
-  color: #4b5563;
-  margin: 0;
 }
 
 .header-actions {
@@ -160,19 +474,23 @@ function toggleDark() {
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-/* Main content card */
+.header-actions button:hover {
+  background: #1d4ed8;
+}
+
 .app-main {
   background: #f7f7f7;
   border-radius: 8px;
   padding: 1rem 1.25rem 1.5rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
+  min-height: 400px;
 }
 
-/* Toast */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -186,29 +504,6 @@ function toggleDark() {
   z-index: 100;
 }
 
-.toast-enter-active,
-.toast-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-/* Fade transition */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease-out;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* Dark mode */
 .app-dark {
   background-color: #0f172a;
   color: #e2e8f0;
@@ -218,12 +513,12 @@ function toggleDark() {
   background: #1e293b;
 }
 
-.app-dark .app-header p {
-  color: #cbd5e1;
-}
-
 .app-dark .header-actions button {
   background: #3b82f6;
+}
+
+.app-dark .header-actions button:hover {
+  background: #2563eb;
 }
 
 .app-dark .toast {
@@ -231,19 +526,25 @@ function toggleDark() {
   color: #f8fafc;
 }
 
-/* Mobile tweaks */
-@media (max-width: 600px) {
-  .app-shell {
-    padding: 0.75rem;
-  }
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
 
-  .app-main {
-    padding: 0.9rem;
-  }
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 
-  .header-actions {
-    flex-direction: column;
-    align-items: center;
-  }
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

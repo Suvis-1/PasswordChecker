@@ -129,7 +129,7 @@ watch(
 
 <template>
   <transition name="fade-slide">
-    <section v-if="results.length" class="results">
+    <section v-if="results.length" class="results-container">
 
       <!-- Bulk controls -->
       <div class="bulk-controls">
@@ -139,7 +139,7 @@ watch(
       </div>
 
       <!-- FIXED HEIGHT WRAPPER -->
-      <div class="results-container">
+      <div class="results-scroll-container">
         <table class="results-table">
           <thead>
             <tr>
@@ -215,12 +215,12 @@ watch(
 </template>
 
 <style scoped>
-.results {
-  margin-top: 1.5rem;
+.results-container {
+  margin-top: 2rem;
 }
 
 /* FIXED HEIGHT WRAPPER */
-.results-container {
+.results-scroll-container {
   max-height: 600px;
   overflow-y: auto;
   padding-right: 0.5rem;
@@ -394,7 +394,7 @@ watch(
   background: #3b82f6;
 }
 
-.app-dark .results-container {
+.app-dark .results-scroll-container {
   scrollbar-color: #64748b #1e293b;
 }
 </style>

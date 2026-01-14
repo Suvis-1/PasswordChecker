@@ -116,6 +116,16 @@ function clearForm() {
   error.value = "";
   emit("clear");
 }
+
+// Function to programmatically switch mode (for tour)
+function switchMode(newMode) {
+  mode.value = newMode;
+}
+
+// Expose functions for tour
+defineExpose({
+  switchMode
+});
 </script>
 
 <template>
@@ -124,10 +134,18 @@ function clearForm() {
 
     <!-- Mode switch -->
     <div class="mode-switch">
-      <button :class="{ active: mode === 'single' }" @click="mode = 'single'">
+      <button 
+        :class="{ active: mode === 'single' }" 
+        @click="mode = 'single'"
+        data-tour-target="single-mode-btn"
+      >
         Single password
       </button>
-      <button :class="{ active: mode === 'multi' }" @click="mode = 'multi'">
+      <button 
+        :class="{ active: mode === 'multi' }" 
+        @click="mode = 'multi'"
+        data-tour-target="multi-mode-btn"
+      >
         Multiple passwords
       </button>
     </div>
@@ -140,13 +158,22 @@ function clearForm() {
           :type="showSinglePassword ? 'text' : 'password'"
           v-model="singlePassword"
           placeholder="Enter a password"
+          data-tour-target="single-password-input"
         />
 
-        <button class="toggle-visibility" @click="showSinglePassword = !showSinglePassword">
+        <button 
+          class="toggle-visibility" 
+          @click="showSinglePassword = !showSinglePassword"
+          data-tour-target="toggle-visibility-btn"
+        >
           {{ showSinglePassword ? "Hide" : "Show" }}
         </button>
 
-        <button class="generate-btn" @click="handleGenerate">
+        <button 
+          class="generate-btn" 
+          @click="handleGenerate"
+          data-tour-target="generate-password-btn"
+        >
           Generate
         </button>
       </div>
@@ -159,16 +186,25 @@ function clearForm() {
         rows="6"
         v-model="multiPasswords"
         placeholder="Enter one password per line"
+        data-tour-target="multi-password-textarea"
       ></textarea>
     </div>
 
     <!-- Actions -->
     <div class="actions">
-      <button @click="handleSubmit" :disabled="loading">
+      <button 
+        @click="handleSubmit" 
+        :disabled="loading"
+        data-tour-target="check-button"
+      >
         {{ loading ? "Checking..." : "Check" }}
       </button>
 
-      <button class="clear-btn" @click="clearForm">
+      <button 
+        class="clear-btn action-button" 
+        @click="clearForm"
+        data-tour-target="clear-button"
+      >
         Clear
       </button>
     </div>
@@ -196,10 +232,14 @@ function clearForm() {
   background: #a7a7a755;
   cursor: pointer;
   color: black;
+  transition: background 0.2s ease;
 }
 .mode-switch button.active {
   background: #000000;
   color: white;
+}
+.mode-switch button:hover:not(.active) {
+  background: #d1d5db;
 }
 
 /* Fields */
@@ -208,6 +248,11 @@ function clearForm() {
   flex-direction: column;
   gap: 0.25rem;
   margin-bottom: 0.75rem;
+}
+
+.field label {
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 /* Password input row */
@@ -220,68 +265,185 @@ function clearForm() {
 .password-input-wrapper input {
   flex: 1 1 100%;
   min-width: 0;
-}
-.password-input-wrapper button {
-  flex: 0 0 auto;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  height: 38px; /* Set fixed height */
+  box-sizing: border-box; /* Include padding in height */
 }
 
-/* Buttons */
-.toggle-visibility,
-.generate-btn {
+.password-input-wrapper input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -1px;
+}
+
+/* Make all buttons in password-input-wrapper the same size */
+.password-input-wrapper button {
   flex: 1 1 auto;
   white-space: nowrap;
-}
-
-.generate-btn {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-button {
   padding: 0.5rem 0.9rem;
   border-radius: 4px;
   border: none;
-  background: #2563eb;
-  color: white;
   cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease;
+  height: 38px; /* Match input height exactly */
+  box-sizing: border-box; /* Include padding in height */
 }
 
-.clear-btn {
+.toggle-visibility,
+.generate-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db !important;
+}
+
+.toggle-visibility:hover,
+.generate-btn:hover {
+  background: #e5e7eb;
+}
+
+.generate-btn {
   background: #f3f4f6;
   color: #374151;
   border: 1px solid #d1d5db;
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: monospace;
+  resize: vertical;
+  min-height: 120px;
+}
+
+textarea:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -1px;
+}
+
+/* Actions - Make Check and Clear buttons same size as Show/Generate */
+.actions {
+  display: flex;
+  gap: 0.4rem; /* Same gap as password-input-wrapper */
+  margin-top: 1rem;
+}
+
+.actions button {
+  flex: 1 1 auto; /* Make them flex equally */
+  padding: 0.5rem 0.9rem; /* Same padding */
+  border-radius: 4px; /* Same border radius */
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem; /* Same font size */
+  transition: background 0.2s ease;
+  height: 38px; /* Same height */
+  box-sizing: border-box; /* Include padding in height */
+  white-space: nowrap; /* Same text wrapping */
+}
+
+/* Check button - blue style */
+.actions button:first-child {
+  background: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+}
+
+.actions button:first-child:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Clear button - same style as Show/Generate buttons */
+.clear-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db !important;
+}
+
+.clear-btn:hover {
+  background: #e5e7eb;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Error */
 .error {
   color: #b91c1c;
   margin-top: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  background: #fee2e2;
+  border-radius: 4px;
+  border-left: 3px solid #b91c1c;
 }
 
 /* Dark mode compatibility */
-.app-dark .password-form input,
-.app-dark .password-form textarea {
+:deep(.app-dark) .password-form input,
+:deep(.app-dark) .password-form textarea {
   background: #334155;
   color: #f1f5f9;
   border-color: #475569;
 }
 
-.app-dark .toggle-visibility,
-.app-dark .generate-btn {
-  background: #475569;
-  color: #f8fafc;
-  border-color: #64748b;
+:deep(.app-dark) .password-form input:focus,
+:deep(.app-dark) .password-form textarea:focus {
+  outline-color: #60a5fa;
 }
 
-.app-dark .clear-btn {
+:deep(.app-dark) .toggle-visibility,
+:deep(.app-dark) .generate-btn,
+:deep(.app-dark) .clear-btn {
   background: #475569;
   color: #f8fafc;
-  border-color: #64748b;
+  border-color: #64748b !important;
+}
+
+:deep(.app-dark) .toggle-visibility:hover,
+:deep(.app-dark) .generate-btn:hover,
+:deep(.app-dark) .clear-btn:hover {
+  background: #4b5563;
+}
+
+:deep(.app-dark) .actions button:first-child {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+:deep(.app-dark) .actions button:first-child:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+:deep(.app-dark) .mode-switch {
+  border-color: #475569;
+}
+
+:deep(.app-dark) .mode-switch button {
+  background: #475569;
+  color: #f8fafc;
+}
+
+:deep(.app-dark) .mode-switch button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+:deep(.app-dark) .mode-switch button:hover:not(.active) {
+  background: #4b5563;
+}
+
+:deep(.app-dark) .error {
+  color: #fca5a5;
+  background: #7f1d1d;
+  border-left-color: #ef4444;
 }
 </style>
