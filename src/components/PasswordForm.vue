@@ -154,12 +154,15 @@ defineExpose({
     <div v-if="mode === 'single'" class="field">
       <label>Password</label>
       <div class="password-input-wrapper">
-        <input
-          :type="showSinglePassword ? 'text' : 'password'"
-          v-model="singlePassword"
-          placeholder="Enter a password"
-          data-tour-target="single-password-input"
-        />
+        <form @submit.prevent>
+          <input
+            :type="showSinglePassword ? 'text' : 'password'"
+            v-model="singlePassword"
+            placeholder="Enter a password"
+            data-tour-target="single-password-input"
+          />
+        </form>
+
 
         <button 
           class="toggle-visibility" 
